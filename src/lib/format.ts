@@ -2,9 +2,18 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 export const cn = (...values: ClassValue[]) => twMerge(clsx(values));
 export const money = (cents: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-    (Number(cents) || 0) / 100,
-  );
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
+    .format((Number(cents) || 0) / 100)
+    .replace(/\u00a0/g, " ");
+export const maskMoney = (value: string | number): string => {
+  if (typeof value === "number") {
+    return money(value);
+  }
+  const digits = String(value).replace(/\D/g, "");
+  if (!digits) return "";
+  const cents = Number(digits);
+  return money(cents);
+};
 export const quantity = (value: number) =>
   new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 }).format(value);
 export const today = () => {
@@ -22,7 +31,7 @@ export const toCents = (value: string | number) => {
     const cents = Math.round((value + Number.EPSILON) * 100);
     return Number.isSafeInteger(cents) ? cents : 0;
   }
-  const raw = value.replace(/R\$|\s/g, "");
+  const raw = value.replace(/R\$|\s|\u00a0/g, "");
   const normalized = raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw;
   if (!/^-?\d+(\.\d+)?$/.test(normalized)) return 0;
   const negative = normalized.startsWith("-");

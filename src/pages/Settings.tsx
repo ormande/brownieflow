@@ -20,11 +20,11 @@ import { money, toCents } from "../lib/format";
 import {
   Button,
   Card,
+  CustomSelect,
   Field,
   Input,
   Modal,
   PageHeader,
-  Select,
   Textarea,
   Badge,
 } from "../components/ui";
@@ -120,11 +120,20 @@ function ProfileForm({ profile }: { profile: Profile }) {
             />
           </Field>
           <Field label="Tema">
-            <Select {...form.register("theme")}>
-              <option value="system">Acompanhar o dispositivo</option>
-              <option value="light">Claro</option>
-              <option value="dark">Escuro</option>
-            </Select>
+            <CustomSelect
+              value={form.watch("theme")}
+              onChange={(value) =>
+                form.setValue("theme", value as ProfileValues["theme"], {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+              options={[
+                { value: "system", label: "Acompanhar o dispositivo" },
+                { value: "light", label: "Claro" },
+                { value: "dark", label: "Escuro" },
+              ]}
+            />
           </Field>
         </div>
       </Card>

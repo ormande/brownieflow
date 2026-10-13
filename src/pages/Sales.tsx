@@ -3,11 +3,11 @@ import { Plus, Search, ShoppingBag, Wallet, Tag } from "lucide-react";
 import {
   Button,
   Card,
+  CustomSelect,
   Empty,
   Field,
   Input,
   PageHeader,
-  Select,
   Stat,
 } from "../components/ui";
 import { useAppData } from "../lib/data";
@@ -121,21 +121,29 @@ export default function Sales() {
           </Field>
           <DateRange start={start} end={end} setStart={setStart} setEnd={setEnd} />
           <Field label="Situação">
-            <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="all">Todas</option>
-              <option value="pending">Pendentes</option>
-              <option value="partial">Parciais</option>
-              <option value="overdue">Atrasadas</option>
-              <option value="paid">Quitadas</option>
-              <option value="cancelled">Canceladas</option>
-            </Select>
+            <CustomSelect
+              value={status}
+              onChange={setStatus}
+              options={[
+                { value: "all", label: "Todas" },
+                { value: "pending", label: "Pendentes" },
+                { value: "partial", label: "Parciais" },
+                { value: "overdue", label: "Atrasadas" },
+                { value: "paid", label: "Quitadas" },
+                { value: "cancelled", label: "Canceladas" },
+              ]}
+            />
           </Field>
           <Field label="Modalidade">
-            <Select value={modality} onChange={(e) => setModality(e.target.value)}>
-              <option value="all">Todas</option>
-              <option value="cash">À vista</option>
-              <option value="credit">Fiado</option>
-            </Select>
+            <CustomSelect
+              value={modality}
+              onChange={setModality}
+              options={[
+                { value: "all", label: "Todas" },
+                { value: "cash", label: "À vista" },
+                { value: "credit", label: "Fiado" },
+              ]}
+            />
           </Field>
         </div>
       </Card>

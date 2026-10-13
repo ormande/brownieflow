@@ -9,12 +9,13 @@ import {
   Button,
   Card,
   ConfirmButton,
+  CustomSelect,
+  DatePicker,
   Empty,
   Field,
   Input,
   Modal,
   PageHeader,
-  Select,
   Stat,
   Textarea,
 } from "../components/ui";
@@ -76,6 +77,8 @@ export default function Expenses() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: emptyValues() });
   const launch = (expense?: Expense) => {
@@ -172,19 +175,25 @@ export default function Expenses() {
         <div className="toolbar">
           <DateRange start={start} end={end} setStart={setStart} setEnd={setEnd} />
           <Field label="Categoria">
-            <Select value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="all">Todas as categorias</option>
-              {categories.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </Select>
+            <CustomSelect
+              value={category}
+              onChange={setCategory}
+              options={[
+                { value: "all", label: "Todas as categorias" },
+                ...categories.map((value) => ({ value, label: value })),
+              ]}
+            />
           </Field>
           <Field label="Origem">
-            <Select value={source} onChange={(e) => setSource(e.target.value)}>
-              <option value="all">Todos os lançamentos</option>
-              <option value="purchase">Compras de insumos</option>
-              <option value="manual">Despesas manuais</option>
-            </Select>
+            <CustomSelect
+              value={source}
+              onChange={setSource}
+              options={[
+                { value: "all", label: "Todos os lançamentos" },
+                { value: "purchase", label: "Compras de insumos" },
+                { value: "manual", label: "Despesas manuais" },
+              ]}
+            />
           </Field>
         </div>
       </Card>
@@ -336,11 +345,16 @@ export default function Expenses() {
           </Field>
           <div className="form-grid">
             <Field label="Categoria">
-              <Select {...register("category")}>
-                {categories.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </Select>
+              <CustomSelect
+                value={watch("category")}
+                onChange={(value) =>
+                  setValue("category", value as Values["category"], {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+                options={categories.map((value) => ({ value, label: value }))}
+              />
             </Field>
             <Field label="Valor (R$)" error={errors.amount?.message}>
               <Input inputMode="decimal" placeholder="0,00" {...register("amount")} />
@@ -348,16 +362,27 @@ export default function Expenses() {
           </div>
           <div className="form-grid">
             <Field label="Data" error={errors.expense_date?.message}>
-              <Input type="date" {...register("expense_date")} />
+              <DatePicker
+                value={watch("expense_date")}
+                onChange={(value) =>
+                  setValue("expense_date", value, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
             </Field>
             <Field label="Forma de pagamento">
-              <Select {...register("method")}>
-                {paymentMethods.map(([key, label]) => (
-                  <option value={key} key={key}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
+              <CustomSelect
+                value={watch("method")}
+                onChange={(value) =>
+                  setValue("method", value as Values["method"], {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+                options={paymentMethods.map(([value, label]) => ({ value, label }))}
+              />
             </Field>
           </div>
           <Field label="Fornecedor (opcional)">

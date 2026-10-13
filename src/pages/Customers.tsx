@@ -16,11 +16,11 @@ import {
   Button,
   Card,
   ConfirmButton,
+  CustomSelect,
   Empty,
   Field,
   Input,
   PageHeader,
-  Select,
   Stat,
 } from "../components/ui";
 import { useAction, useAppData } from "../lib/data";
@@ -106,11 +106,15 @@ export default function Customers() {
             </div>
           </Field>
           <Field label="Exibir">
-            <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
-              <option value="active">Clientes ativos</option>
-              <option value="archived">Arquivados</option>
-              <option value="all">Todos</option>
-            </Select>
+            <CustomSelect
+              value={filter}
+              onChange={setFilter}
+              options={[
+                { value: "active", label: "Clientes ativos" },
+                { value: "archived", label: "Arquivados" },
+                { value: "all", label: "Todos" },
+              ]}
+            />
           </Field>
         </div>
       </Card>

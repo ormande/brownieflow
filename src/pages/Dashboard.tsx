@@ -27,7 +27,15 @@ import {
 import { useAppData } from "../lib/data";
 import { money, today, dateLabel } from "../lib/format";
 import { saleBalance, salePaid, saleStatus, saleAdjustment } from "../lib/finance";
-import { Badge, Button, Card, Empty, Input, PageHeader, Stat } from "../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  DatePicker,
+  Empty,
+  PageHeader,
+  Stat,
+} from "../components/ui";
 import SaleForm from "../components/SaleForm";
 export default function Dashboard() {
   const { data } = useAppData();
@@ -125,6 +133,8 @@ export default function Dashboard() {
   const available = data.products
     .filter((p) => p.active)
     .reduce((a, p) => a + Number(p.stock), 0);
+  const stockReference = Math.max(Number(profile?.low_stock_threshold ?? 12), 1);
+  const stockAngle = Math.max(0, Math.min(360, (available / stockReference) * 360));
   const dayRevenue = c.daySales.reduce((a, s) => a + s.total_cents, 0);
   const dayReceived = data.payments
     .filter((p) => !p.voided_at && p.payment_date === now)
@@ -155,20 +165,18 @@ export default function Dashboard() {
         </div>
         <div className="period-inputs">
           <CalendarDays size={16} />
-          <Input
-            type="date"
+          <DatePicker
             aria-label="Início do período"
             value={from}
             max={to}
-            onChange={(e) => setFrom(e.target.value)}
+            onChange={setFrom}
           />
           <span>até</span>
-          <Input
-            type="date"
+          <DatePicker
             aria-label="Fim do período"
             value={to}
             min={from}
-            onChange={(e) => setTo(e.target.value)}
+            onChange={setTo}
           />
         </div>
       </div>
@@ -326,7 +334,13 @@ export default function Dashboard() {
           </div>
           <h2>Sua fornada de hoje</h2>
           <p>Cada brownie faz a diferença.</p>
-          <div className="production-ring">
+          <div
+            className="production-ring"
+            aria-label={`${available} brownies disponíveis em estoque`}
+            style={{
+              background: `conic-gradient(from 205deg, #0e9870 0deg, #64cda6 ${stockAngle}deg, var(--ring-empty) ${stockAngle}deg 360deg)`,
+            }}
+          >
             <span>
               {available}
               <small>disponíveis em estoque</small>

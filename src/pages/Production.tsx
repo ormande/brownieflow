@@ -11,12 +11,13 @@ import {
   Badge,
   Button,
   Card,
+  CustomSelect,
+  DatePicker,
   Empty,
   Field,
   Input,
   Modal,
   PageHeader,
-  Select,
   Stat,
   Textarea,
 } from "../components/ui";
@@ -113,18 +114,29 @@ function ProductionForm({ data, onClose }: { data: AppData; onClose: () => void 
         })}
       >
         <Field label="Ficha técnica" error={errors.recipe_id?.message}>
-          <Select {...register("recipe_id")}>
-            <option value="">Selecione...</option>
-            {data.recipes.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.name} · {row.yield_quantity} un/forma
-              </option>
-            ))}
-          </Select>
+          <CustomSelect
+            value={recipeId}
+            onChange={(value) =>
+              setValue("recipe_id", value, { shouldDirty: true, shouldValidate: true })
+            }
+            placeholder="Selecione..."
+            options={data.recipes.map((row) => ({
+              value: row.id,
+              label: `${row.name} · ${row.yield_quantity} un/forma`,
+            }))}
+          />
         </Field>
         <div className="form-grid">
           <Field label="Data da produção" error={errors.production_date?.message}>
-            <Input type="date" {...register("production_date")} />
+            <DatePicker
+              value={watch("production_date")}
+              onChange={(value) =>
+                setValue("production_date", value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            />
           </Field>
           <Field label="Quantidade de formas" error={errors.batches?.message}>
             <Input
@@ -364,35 +376,23 @@ export default function Production() {
               </div>
               <div className="toolbar">
                 <Field label="Receita">
-                  <Select
+                  <CustomSelect
                     value={recipeFilter}
-                    onChange={(event) => {
-                      setRecipeFilter(event.target.value);
+                    onChange={(value) => {
+                      setRecipeFilter(value);
                       setLimit(50);
                     }}
-                  >
-                    <option value="">Todas as receitas</option>
-                    {data.recipes.map((row) => (
-                      <option key={row.id} value={row.id}>
-                        {row.name}
-                      </option>
-                    ))}
-                  </Select>
+                    options={[
+                      { value: "", label: "Todas as receitas" },
+                      ...data.recipes.map((row) => ({ value: row.id, label: row.name })),
+                    ]}
+                  />
                 </Field>
                 <Field label="De">
-                  <Input
-                    type="date"
-                    value={from}
-                    onChange={(event) => setFrom(event.target.value)}
-                  />
+                  <DatePicker value={from} max={to || undefined} onChange={setFrom} />
                 </Field>
                 <Field label="Até">
-                  <Input
-                    type="date"
-                    min={from}
-                    value={to}
-                    onChange={(event) => setTo(event.target.value)}
-                  />
+                  <DatePicker min={from} value={to} onChange={setTo} />
                 </Field>
                 {(from || to || recipeFilter) && (
                   <Button

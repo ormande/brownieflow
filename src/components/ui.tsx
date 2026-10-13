@@ -46,13 +46,6 @@ export const Input = React.forwardRef<
   <input ref={ref} className={cn("input", className)} {...props} />
 ));
 Input.displayName = "Input";
-export const Select = React.forwardRef<
-  HTMLSelectElement,
-  React.SelectHTMLAttributes<HTMLSelectElement>
->(({ className, ...props }, ref) => (
-  <select ref={ref} className={cn("input select", className)} {...props} />
-));
-Select.displayName = "Select";
 export const Textarea = React.forwardRef<
   HTMLTextAreaElement,
   React.TextareaHTMLAttributes<HTMLTextAreaElement>
@@ -277,3 +270,7 @@ export function Loading() {
     </div>
   );
 }
+
+export { DatePicker } from "./DatePicker";
+export { CustomSelect } from "./CustomSelect";
+export { CustomerCombobox } from "./CustomerCombobox";

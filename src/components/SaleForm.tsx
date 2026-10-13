@@ -2,18 +2,22 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Search, ShoppingBag } from "lucide-react";
-import { Button, Card, Field, Input, Modal, Select, Textarea } from "./ui";
-import { useAction, useAppData } from "../lib/data";
-import { addDays, money, toCents, today } from "../lib/format";
-import CustomerForm from "./finance/CustomerForm";
+import { Plus, ShoppingBag } from "lucide-react";
 import {
-  amountSchema,
-  dateSchema,
-  matchesCustomer,
-  paymentMethods,
-  validMoney,
-} from "./finance/shared";
+  Button,
+  Card,
+  CustomerCombobox,
+  CustomSelect,
+  DatePicker,
+  Field,
+  Input,
+  Modal,
+  Textarea,
+} from "./ui";
+import { useAction, useAppData } from "../lib/data";
+import { addDays, maskMoney, money, toCents, today } from "../lib/format";
+import CustomerForm from "./finance/CustomerForm";
+import { amountSchema, dateSchema, paymentMethods, validMoney } from "./finance/shared";
 import { useRequestIdentity } from "./finance/requestIdentity";
 
 const schema = z
@@ -109,7 +113,6 @@ export default function SaleForm({
   const action = useAction();
   const requestIdentity = useRequestIdentity();
   const submitting = useRef(false);
-  const [customerSearch, setCustomerSearch] = useState("");
   const [quickCustomer, setQuickCustomer] = useState(false);
   const {
     register,
@@ -126,9 +129,9 @@ export default function SaleForm({
       product_id: "",
       quantity: "1",
       modality: "cash",
-      price: "5.00",
+      price: "R$ 5,00",
       discount_mode: "money",
-      discount: "0",
+      discount: "R$ 0,00",
       sale_date: today(),
       due_date: "",
       notes: "",
@@ -161,9 +164,9 @@ export default function SaleForm({
       product_id: product?.id ?? "",
       quantity: String(item?.quantity ?? 1),
       modality: sale?.modality ?? "cash",
-      price: ((price ?? 500) / 100).toFixed(2),
+      price: money(price ?? 500),
       discount_mode: "money",
-      discount: ((sale?.discount_cents ?? 0) / 100).toFixed(2),
+      discount: money(sale?.discount_cents ?? 0),
       sale_date: today(),
       due_date: addDays(today(), data.profiles[0]?.due_days ?? 7),
       notes: sale?.notes ?? "",
@@ -171,7 +174,6 @@ export default function SaleForm({
       payment_amount: "",
       method: "pix",
     });
-    setCustomerSearch("");
     initialized.current = true;
   }, [open, data, repeatSaleId, reset]);
   const values = watch();
@@ -188,26 +190,17 @@ export default function SaleForm({
       : values.payment_mode === "partial"
         ? toCents(values.payment_amount || "0")
         : 0;
-  const clients = (data?.customers ?? []).filter(
-    (c) => !c.archived && matchesCustomer(c, customerSearch),
-  );
-  const recent = [...(data?.sales ?? [])]
-    .sort((a, b) => b.created_at.localeCompare(a.created_at))
-    .map((s) => s.customer_id)
-    .filter((id, i, all) => id && all.indexOf(id) === i)
-    .slice(0, 4);
+
   function setProductOrMode(id: string, mode: "cash" | "credit") {
-    setValue("product_id", id);
-    setValue("modality", mode);
+    setValue("product_id", id, { shouldValidate: true });
+    setValue("modality", mode, { shouldValidate: true });
     const p = data?.products.find((item) => item.id === id);
-    if (p)
-      setValue(
-        "price",
-        ((mode === "credit" ? p.credit_price_cents : p.cash_price_cents) / 100).toFixed(
-          2,
-        ),
-      );
+    if (p) {
+      const cents = mode === "credit" ? p.credit_price_cents : p.cash_price_cents;
+      setValue("price", money(cents), { shouldValidate: true });
+    }
   }
+
   const submit = handleSubmit(async (v) => {
     if (submitting.current) return;
     if (product && Number(v.quantity) > Number(product.stock)) {
@@ -252,6 +245,7 @@ export default function SaleForm({
       submitting.current = false;
     }
   });
+
   return (
     <>
       <Modal
@@ -264,8 +258,13 @@ export default function SaleForm({
       >
         <form className="stack" onSubmit={submit}>
           <div>
-            <div className="toolbar" style={{ justifyContent: "space-between" }}>
-              <label className="section-title">Cliente</label>
+            <div
+              className="toolbar"
+              style={{ justifyContent: "space-between", marginBottom: 6 }}
+            >
+              <label className="field-label" style={{ margin: 0 }}>
+                Cliente
+              </label>
               <Button
                 variant="ghost"
                 size="sm"
@@ -275,111 +274,114 @@ export default function SaleForm({
                 <Plus size={15} /> Cadastrar
               </Button>
             </div>
-            <div style={{ position: "relative" }}>
-              <Search
-                size={16}
-                style={{ position: "absolute", left: 13, top: 13, opacity: 0.5 }}
-              />
-              <Input
-                style={{ paddingLeft: 38 }}
-                placeholder="Buscar nome ou telefone"
-                value={customerSearch}
-                onChange={(e) => setCustomerSearch(e.target.value)}
-              />
-            </div>
-            <Field label="Selecionar cliente" error={errors.customer_id?.message}>
-              <Select {...register("customer_id")}>
-                <option value="">Sem cliente</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                    {c.phone ? ` · ${c.phone}` : ""}
-                  </option>
-                ))}
-                {values.customer_id &&
-                  !clients.some((c) => c.id === values.customer_id) && (
-                    <option value={values.customer_id}>
-                      {data?.customers.find((c) => c.id === values.customer_id)?.name ??
-                        "Cliente selecionado"}
-                    </option>
-                  )}
-              </Select>
-            </Field>
-            {!customerSearch && recent.length > 0 && (
-              <div className="toolbar" style={{ gap: 6, marginTop: 8 }}>
-                {recent.map((id) => {
-                  const client = data?.customers.find((c) => c.id === id && !c.archived);
-                  return (
-                    client && (
-                      <Button
-                        key={id}
-                        type="button"
-                        size="sm"
-                        variant={values.customer_id === id ? "default" : "secondary"}
-                        onClick={() => setValue("customer_id", client.id)}
-                      >
-                        {client.name.split(" ")[0]}
-                      </Button>
-                    )
-                  );
-                })}
-              </div>
+            <CustomerCombobox
+              value={values.customer_id}
+              onChange={(id) => setValue("customer_id", id, { shouldValidate: true })}
+              customers={data?.customers ?? []}
+            />
+            {errors.customer_id?.message && (
+              <span
+                className="field-error"
+                role="alert"
+                style={{ marginTop: 4, display: "block" }}
+              >
+                {errors.customer_id.message}
+              </span>
             )}
           </div>
+
           <div className="form-grid">
             <Field label="Produto" error={errors.product_id?.message}>
-              <Select
+              <CustomSelect
                 value={values.product_id}
-                onChange={(e) => setProductOrMode(e.target.value, values.modality)}
-              >
-                <option value="">Selecione</option>
-                {data?.products
+                onChange={(id) => setProductOrMode(id, values.modality)}
+                placeholder="Selecione o produto"
+                options={(data?.products ?? [])
                   .filter((p) => p.active)
-                  .map((p) => (
-                    <option value={p.id} key={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-              </Select>
+                  .map((p) => ({ value: p.id, label: p.name }))}
+              />
             </Field>
             <Field
               label="Quantidade"
               error={errors.quantity?.message}
               hint={product ? `${product.stock} disponíveis no estoque` : undefined}
             >
-              <Input type="number" min="1" step="1" {...register("quantity")} />
+              <Input
+                type="number"
+                min="1"
+                step="1"
+                placeholder="1"
+                {...register("quantity")}
+              />
             </Field>
           </div>
+
           <div className="form-grid">
             <Field label="Modalidade">
-              <Select
+              <CustomSelect
                 value={values.modality}
-                onChange={(e) =>
-                  setProductOrMode(values.product_id, e.target.value as "cash" | "credit")
+                onChange={(mode) =>
+                  setProductOrMode(values.product_id, mode as "cash" | "credit")
                 }
-              >
-                <option value="cash">À vista</option>
-                <option value="credit">Fiado</option>
-              </Select>
+                options={[
+                  { value: "cash", label: "À vista" },
+                  { value: "credit", label: "Fiado" },
+                ]}
+              />
             </Field>
-            <Field label="Preço unitário (R$)" error={errors.price?.message}>
-              <Input inputMode="decimal" {...register("price")} />
+            <Field label="Preço unitário" error={errors.price?.message}>
+              <Input
+                inputMode="numeric"
+                placeholder="R$ 5,00"
+                {...register("price")}
+                onChange={(e) => {
+                  const formatted = maskMoney(e.target.value);
+                  setValue("price", formatted || "R$ 0,00", { shouldValidate: true });
+                }}
+              />
             </Field>
           </div>
+
           <div className="form-grid">
             <Field label="Tipo de desconto">
-              <Select {...register("discount_mode")}>
-                <option value="money">Em reais (R$)</option>
-                <option value="percent">Percentual (%)</option>
-              </Select>
+              <CustomSelect
+                value={values.discount_mode}
+                onChange={(mode) => {
+                  const m = mode as "money" | "percent";
+                  setValue("discount_mode", m);
+                  setValue("discount", m === "money" ? "R$ 0,00" : "0", {
+                    shouldValidate: true,
+                  });
+                }}
+                options={[
+                  { value: "money", label: "Em reais (R$)" },
+                  { value: "percent", label: "Percentual (%)" },
+                ]}
+              />
             </Field>
             <Field
-              label={values.discount_mode === "money" ? "Desconto (R$)" : "Desconto (%)"}
+              label={values.discount_mode === "money" ? "Desconto" : "Desconto (%)"}
               error={errors.discount?.message}
             >
-              <Input inputMode="decimal" {...register("discount")} />
+              <Input
+                inputMode={values.discount_mode === "money" ? "numeric" : "decimal"}
+                placeholder={values.discount_mode === "money" ? "R$ 0,00" : "0%"}
+                {...register("discount")}
+                onChange={(e) => {
+                  if (values.discount_mode === "money") {
+                    const formatted = maskMoney(e.target.value);
+                    setValue("discount", formatted || "R$ 0,00", {
+                      shouldValidate: true,
+                    });
+                  } else {
+                    const val = e.target.value.replace(/[^\d.,]/g, "");
+                    setValue("discount", val, { shouldValidate: true });
+                  }
+                }}
+              />
             </Field>
           </div>
+
           <Card style={{ padding: 18, background: "var(--green-light, #edf8ef)" }}>
             <div className="list-row">
               <span className="muted">Subtotal</span>
@@ -398,60 +400,83 @@ export default function SaleForm({
               </strong>
             </div>
           </Card>
+
           <div className="form-grid">
             <Field label="Data da venda" error={errors.sale_date?.message}>
-              <Input
-                type="date"
-                {...register("sale_date")}
-                onChange={(e) => {
+              <DatePicker
+                value={values.sale_date}
+                onChange={(date) => {
                   const days = data?.profiles[0]?.due_days ?? 7;
-                  if (
-                    dateSchema.safeParse(e.target.value).success &&
-                    values.due_date === addDays(values.sale_date, days)
-                  )
-                    setValue("due_date", addDays(e.target.value, days));
-                  setValue("sale_date", e.target.value, { shouldValidate: true });
+                  if (date && values.due_date === addDays(values.sale_date, days)) {
+                    setValue("due_date", addDays(date, days));
+                  }
+                  setValue("sale_date", date, { shouldValidate: true });
                 }}
               />
             </Field>
             <Field label="Vencimento" error={errors.due_date?.message}>
-              <Input type="date" min={values.sale_date} {...register("due_date")} />
+              <DatePicker
+                value={values.due_date}
+                min={values.sale_date}
+                onChange={(date) => setValue("due_date", date, { shouldValidate: true })}
+              />
             </Field>
           </div>
+
           <Field
             label="Pagamento"
             hint="A modalidade define o preço. O saldo só é quitado ao registrar um pagamento."
           >
-            <Select {...register("payment_mode")}>
-              <option value="none">Deixar pendente</option>
-              <option value="full">Recebi o valor total</option>
-              <option value="partial">Recebi uma parte</option>
-            </Select>
+            <CustomSelect
+              value={values.payment_mode}
+              onChange={(mode) =>
+                setValue("payment_mode", mode as any, { shouldValidate: true })
+              }
+              options={[
+                { value: "none", label: "Deixar pendente" },
+                { value: "full", label: "Recebi o valor total" },
+                { value: "partial", label: "Recebi uma parte" },
+              ]}
+            />
           </Field>
+
           {values.payment_mode !== "none" && (
             <div className="form-grid">
               {values.payment_mode === "partial" && (
-                <Field label="Valor recebido (R$)" error={errors.payment_amount?.message}>
-                  <Input inputMode="decimal" {...register("payment_amount")} />
+                <Field label="Valor recebido" error={errors.payment_amount?.message}>
+                  <Input
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    {...register("payment_amount")}
+                    onChange={(e) => {
+                      const formatted = maskMoney(e.target.value);
+                      setValue("payment_amount", formatted, { shouldValidate: true });
+                    }}
+                  />
                 </Field>
               )}
               <Field label="Forma de pagamento">
-                <Select {...register("method")}>
-                  {paymentMethods.map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </Select>
+                <CustomSelect
+                  value={values.method}
+                  onChange={(method) =>
+                    setValue("method", method as any, { shouldValidate: true })
+                  }
+                  options={paymentMethods.map(([key, label]) => ({
+                    value: key,
+                    label,
+                  }))}
+                />
               </Field>
             </div>
           )}
+
           {values.payment_mode !== "none" && (
             <p className="muted" style={{ margin: 0 }}>
               Recebimento na data da venda. Saldo após o pagamento:{" "}
               <strong>{money(Math.max(0, total - (paid || 0)))}</strong>.
             </p>
           )}
+
           <Field label="Observações (opcional)">
             <Textarea
               rows={2}
@@ -459,6 +484,7 @@ export default function SaleForm({
               {...register("notes")}
             />
           </Field>
+
           <div className="form-actions">
             <Button
               variant="secondary"
@@ -479,7 +505,6 @@ export default function SaleForm({
         open={quickCustomer}
         onOpenChange={setQuickCustomer}
         onSaved={(id) => {
-          setCustomerSearch("");
           setValue("customer_id", id, { shouldValidate: true });
         }}
       />

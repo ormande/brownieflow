@@ -6,7 +6,7 @@ import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import type { AppData, Ingredient } from "../../types";
 import { useAction } from "../../lib/data";
 import { money, quantity, today, toCents } from "../../lib/format";
-import { Button, Field, Input, Modal, Select, Textarea } from "../ui";
+import { Button, CustomSelect, DatePicker, Field, Input, Modal, Textarea } from "../ui";
 import { FormError, paymentMethods, useRequestToken } from "./helpers";
 
 const ingredientSchema = z.object({
@@ -29,6 +29,8 @@ export function IngredientForm({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<IngredientFormValues>({
     resolver: zodResolver(ingredientSchema),
@@ -75,11 +77,21 @@ export function IngredientForm({
             }
             error={errors.unit?.message}
           >
-            <Select {...register("unit")} disabled={unitLocked}>
-              <option value="g">Gramas (g)</option>
-              <option value="ml">Mililitros (ml)</option>
-              <option value="un">Unidades (un)</option>
-            </Select>
+            <CustomSelect
+              value={watch("unit")}
+              disabled={unitLocked}
+              onChange={(value) =>
+                setValue("unit", value as IngredientFormValues["unit"], {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+              options={[
+                { value: "g", label: "Gramas (g)" },
+                { value: "ml", label: "Mililitros (ml)" },
+                { value: "un", label: "Unidades (un)" },
+              ]}
+            />
           </Field>
           <Field label="Estoque mínimo" error={errors.minimum_stock?.message}>
             <Input
@@ -142,6 +154,7 @@ export function PurchaseForm({ data, onClose }: { data: AppData; onClose: () => 
     register,
     control,
     watch,
+    setValue,
     handleSubmit,
     formState: { errors },
   } = useForm<PurchaseValues>({
@@ -191,16 +204,27 @@ export function PurchaseForm({ data, onClose }: { data: AppData; onClose: () => 
       >
         <div className="form-grid">
           <Field label="Data da compra" error={errors.purchase_date?.message}>
-            <Input type="date" {...register("purchase_date")} />
+            <DatePicker
+              value={watch("purchase_date")}
+              onChange={(value) =>
+                setValue("purchase_date", value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            />
           </Field>
           <Field label="Pagamento">
-            <Select {...register("method")}>
-              {paymentMethods.map(([key, label]) => (
-                <option value={key} key={key}>
-                  {label}
-                </option>
-              ))}
-            </Select>
+            <CustomSelect
+              value={watch("method")}
+              onChange={(value) =>
+                setValue("method", value as PurchaseValues["method"], {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+              options={paymentMethods.map(([value, label]) => ({ value, label }))}
+            />
           </Field>
         </div>
         <Field label="Fornecedor (opcional)">
@@ -217,14 +241,20 @@ export function PurchaseForm({ data, onClose }: { data: AppData; onClose: () => 
                   label="Ingrediente"
                   error={errors.items?.[index]?.ingredient_id?.message}
                 >
-                  <Select {...register(`items.${index}.ingredient_id`)}>
-                    <option value="">Selecione...</option>
-                    {data.ingredients.map((row) => (
-                      <option key={row.id} value={row.id}>
-                        {row.name}
-                      </option>
-                    ))}
-                  </Select>
+                  <CustomSelect
+                    value={items[index]?.ingredient_id ?? ""}
+                    onChange={(value) =>
+                      setValue(`items.${index}.ingredient_id`, value, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    placeholder="Selecione..."
+                    options={data.ingredients.map((row) => ({
+                      value: row.id,
+                      label: row.name,
+                    }))}
+                  />
                 </Field>
                 <Field
                   label={`Quantidade (${ingredient?.unit ?? "base"})`}
@@ -327,6 +357,7 @@ export function StockAdjustmentForm({
   const {
     register,
     watch,
+    setValue,
     handleSubmit,
     formState: { errors },
   } = useForm<AdjustmentValues>({
@@ -400,31 +431,40 @@ export function StockAdjustmentForm({
         })}
       >
         <Field label="Produto ou ingrediente" error={errors.target?.message}>
-          <Select {...register("target")}>
-            <option value="">Selecione...</option>
-            <optgroup label="Produtos acabados">
-              {data.products.map((row) => (
-                <option key={row.id} value={`product:${row.id}`}>
-                  {row.name}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Ingredientes">
-              {data.ingredients.map((row) => (
-                <option key={row.id} value={`ingredient:${row.id}`}>
-                  {row.name}
-                </option>
-              ))}
-            </optgroup>
-          </Select>
+          <CustomSelect
+            value={target}
+            onChange={(value) =>
+              setValue("target", value, { shouldDirty: true, shouldValidate: true })
+            }
+            placeholder="Selecione..."
+            options={[
+              ...data.products.map((row) => ({
+                value: `product:${row.id}`,
+                label: `Produto · ${row.name}`,
+              })),
+              ...data.ingredients.map((row) => ({
+                value: `ingredient:${row.id}`,
+                label: `Ingrediente · ${row.name}`,
+              })),
+            ]}
+          />
         </Field>
         <Field label="Tipo de movimento">
-          <Select {...register("kind")}>
-            <option value="loss">Perda</option>
-            <option value="gift">Cortesia</option>
-            <option value="personal">Consumo próprio</option>
-            <option value="adjustment">Ajuste manual</option>
-          </Select>
+          <CustomSelect
+            value={kind}
+            onChange={(value) =>
+              setValue("kind", value as AdjustmentValues["kind"], {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
+            options={[
+              { value: "loss", label: "Perda" },
+              { value: "gift", label: "Cortesia" },
+              { value: "personal", label: "Consumo próprio" },
+              { value: "adjustment", label: "Ajuste manual" },
+            ]}
+          />
         </Field>
         <div className="form-grid">
           <Field
@@ -443,7 +483,15 @@ export function StockAdjustmentForm({
             />
           </Field>
           <Field label="Data" error={errors.movement_date?.message}>
-            <Input type="date" {...register("movement_date")} />
+            <DatePicker
+              value={watch("movement_date")}
+              onChange={(value) =>
+                setValue("movement_date", value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            />
           </Field>
         </div>
         {selected && (

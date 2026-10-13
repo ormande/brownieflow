@@ -24,6 +24,25 @@ async function openSale(page: Page) {
   return dialog;
 }
 
+async function chooseSaleOption(page: Page, field: string, option: string) {
+  const dialog = page.getByRole("dialog", { name: "Nova venda", exact: true });
+  await dialog.getByRole("button", { name: new RegExp(`^${field}(?:$| )`) }).click();
+  await page
+    .locator(".popover-panel")
+    .getByRole("button", { name: option, exact: true })
+    .click();
+}
+
+async function chooseSaleCustomer(page: Page) {
+  const dialog = page.getByRole("dialog", { name: "Nova venda", exact: true });
+  await dialog.getByRole("button", { name: "Selecionar cliente", exact: true }).click();
+  await page.getByPlaceholder("Buscar por nome ou telefone...").fill("Cliente de teste");
+  await page
+    .locator(".popover-panel")
+    .getByRole("button", { name: /Cliente de teste/ })
+    .click();
+}
+
 test("private routes redirect to sign-in and validation prevents invalid login requests", async ({
   page,
 }) => {
@@ -66,6 +85,8 @@ test("incorrect credentials remain on sign-in without showing success", async ({
 test("every module renders real empty states without horizontal document overflow", async ({
   page,
 }, testInfo) => {
+  // This single scenario loads all 13 routes; each assertion keeps its own short timeout.
+  test.setTimeout(60_000);
   await mockBackend(page);
   const crashes: string[] = [];
   page.on("pageerror", (error) => crashes.push(error.message));
@@ -99,8 +120,17 @@ test("every module renders real empty states without horizontal document overflo
         await expect(
           page.getByRole("heading", { name: empty, exact: true }),
         ).toBeVisible();
+      await expect(page.locator('select, input[type="date"]')).toHaveCount(0);
       await expectFitsViewport(page);
       if (path === "/") {
+        const bodyFont = await page
+          .locator("body")
+          .evaluate((element) => getComputedStyle(element).fontFamily);
+        expect(bodyFont).toMatch(/^"?DM Sans"?/);
+        const ringBackground = await page
+          .locator(".production-ring")
+          .evaluate((element) => getComputedStyle(element).backgroundImage);
+        expect(ringBackground).toMatch(/0deg.*0deg.*360deg/);
         await page.screenshot({
           path: testInfo.outputPath(`dashboard-${testInfo.project.name}.png`),
           fullPage: true,
@@ -186,13 +216,11 @@ test("cash modality leaves the amount pending unless an actual payment is chosen
   const dialog = await openSale(page);
   await dialog.getByLabel("Quantidade").fill("2");
   await expect(
-    dialog.getByRole("combobox", { name: "Modalidade", exact: true }),
-  ).toHaveValue("cash");
-  await expect(
-    dialog
-      .getByLabel("Pagamento", { exact: false })
-      .filter({ has: page.locator('option[value="none"]') }),
-  ).toHaveValue("none");
+    dialog.getByRole("button", { name: "Modalidade", exact: true }),
+  ).toHaveText("À vista");
+  await expect(dialog.getByRole("button", { name: /^Pagamento / })).toHaveText(
+    "Deixar pendente",
+  );
   await dialog.getByRole("button", { name: "Registrar venda", exact: true }).click();
   await expect(dialog).toHaveCount(0);
   expect(payloads).toHaveLength(1);
@@ -223,17 +251,15 @@ test("credit sale applies its price, percentage discount and partial payment in 
     },
   });
   const dialog = await openSale(page);
-  await dialog.getByLabel("Selecionar cliente").selectOption(customerId);
+  await chooseSaleCustomer(page);
   await dialog.getByLabel("Quantidade").fill("3");
-  await dialog
-    .getByRole("combobox", { name: "Modalidade", exact: true })
-    .selectOption("credit");
-  await expect(dialog.getByLabel("Preço unitário (R$)")).toHaveValue("6.00");
-  await dialog.getByLabel("Tipo de desconto").selectOption("percent");
+  await chooseSaleOption(page, "Modalidade", "Fiado");
+  await expect(dialog.getByLabel("Preço unitário", { exact: true })).toHaveValue(/6,00/);
+  await chooseSaleOption(page, "Tipo de desconto", "Percentual (%)");
   await dialog.getByLabel("Desconto (%)", { exact: true }).fill("10");
-  await dialog.locator('select[name="payment_mode"]').selectOption("partial");
-  await dialog.getByLabel("Valor recebido (R$)").fill("5,20");
-  await dialog.getByLabel("Forma de pagamento").selectOption("pix");
+  await chooseSaleOption(page, "Pagamento", "Recebi uma parte");
+  await dialog.getByLabel("Valor recebido", { exact: true }).fill("5,20");
+  await chooseSaleOption(page, "Forma de pagamento", "Pix");
   await expect(dialog.getByText("R$ 16,20", { exact: true })).toBeVisible();
   await dialog.getByRole("button", { name: "Registrar venda", exact: true }).click();
   await expect(dialog).toHaveCount(0);
@@ -260,14 +286,12 @@ test("credit without customer and sale above stock cannot reach the server", asy
     },
   });
   const dialog = await openSale(page);
-  await dialog
-    .getByRole("combobox", { name: "Modalidade", exact: true })
-    .selectOption("credit");
+  await chooseSaleOption(page, "Modalidade", "Fiado");
   await dialog.getByRole("button", { name: "Registrar venda", exact: true }).click();
   await expect(
     dialog.getByRole("alert").filter({ hasText: "Escolha um cliente para vender fiado" }),
   ).toBeVisible();
-  await dialog.getByLabel("Selecionar cliente").selectOption(customerId);
+  await chooseSaleCustomer(page);
   await dialog.getByLabel("Quantidade").fill("31");
   await dialog.getByRole("button", { name: "Registrar venda", exact: true }).click();
   await expect(

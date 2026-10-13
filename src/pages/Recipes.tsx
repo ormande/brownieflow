@@ -11,12 +11,12 @@ import {
   Button,
   Card,
   ConfirmButton,
+  CustomSelect,
   Empty,
   Field,
   Input,
   Modal,
   PageHeader,
-  Select,
   Stat,
 } from "../components/ui";
 import {
@@ -63,6 +63,7 @@ function RecipeForm({
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<RecipeValues>({
     resolver: zodResolver(recipeSchema),
@@ -126,14 +127,20 @@ function RecipeForm({
         </Field>
         <div className="form-grid">
           <Field label="Produto produzido" error={errors.product_id?.message}>
-            <Select {...register("product_id")}>
-              <option value="">Selecione...</option>
-              {data.products.map((product) => (
-                <option value={product.id} key={product.id}>
-                  {product.name}
-                </option>
-              ))}
-            </Select>
+            <CustomSelect
+              value={watch("product_id")}
+              onChange={(value) =>
+                setValue("product_id", value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+              placeholder="Selecione..."
+              options={data.products.map((product) => ({
+                value: product.id,
+                label: product.name,
+              }))}
+            />
           </Field>
           <Field label="Brownies por forma" error={errors.yield_quantity?.message}>
             <Input
@@ -155,14 +162,20 @@ function RecipeForm({
                   label="Ingrediente"
                   error={errors.items?.[index]?.ingredient_id?.message}
                 >
-                  <Select {...register(`items.${index}.ingredient_id`)}>
-                    <option value="">Selecione...</option>
-                    {data.ingredients.map((row) => (
-                      <option key={row.id} value={row.id}>
-                        {row.name}
-                      </option>
-                    ))}
-                  </Select>
+                  <CustomSelect
+                    value={items[index]?.ingredient_id ?? ""}
+                    onChange={(value) =>
+                      setValue(`items.${index}.ingredient_id`, value, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    placeholder="Selecione..."
+                    options={data.ingredients.map((row) => ({
+                      value: row.id,
+                      label: row.name,
+                    }))}
+                  />
                 </Field>
                 <Field
                   label={`Quantidade (${ingredient?.unit ?? "base"})`}

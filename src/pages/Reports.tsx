@@ -15,7 +15,15 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Button, Card, Empty, Field, PageHeader, Select, Stat } from "../components/ui";
+import {
+  Button,
+  Card,
+  CustomSelect,
+  Empty,
+  Field,
+  PageHeader,
+  Stat,
+} from "../components/ui";
 import { useAppData } from "../lib/data";
 import { dateLabel, methodLabel, money, today } from "../lib/format";
 import {
@@ -232,16 +240,17 @@ export default function Reports() {
         description="Entenda seus números e acompanhe a evolução do negócio."
         action={
           <div className="toolbar">
-            <Select
+            <CustomSelect
               aria-label="Tipo de exportação"
               value={exportType}
-              onChange={(e) => setExportType(e.target.value)}
-            >
-              <option value="sales">Vendas</option>
-              <option value="payments">Recebimentos</option>
-              <option value="customers">Clientes</option>
-              <option value="expenses">Despesas</option>
-            </Select>
+              onChange={setExportType}
+              options={[
+                { value: "sales", label: "Vendas" },
+                { value: "payments", label: "Recebimentos" },
+                { value: "customers", label: "Clientes" },
+                { value: "expenses", label: "Despesas" },
+              ]}
+            />
             <Button
               variant="secondary"
               onClick={exportCsv}
@@ -267,27 +276,28 @@ export default function Reports() {
             }}
           />
           <Field label="Atalho de período">
-            <Select
+            <CustomSelect
               value={periodPreset}
-              onChange={(e) => {
-                setPeriodPreset(e.target.value);
-                if (e.target.value === "month") {
+              onChange={(value) => {
+                setPeriodPreset(value);
+                if (value === "month") {
                   setStart(monthStart());
                   setEnd(today());
-                } else if (e.target.value === "year") {
+                } else if (value === "year") {
                   setStart(`${today().slice(0, 4)}-01-01`);
                   setEnd(today());
-                } else if (e.target.value === "all") {
+                } else if (value === "all") {
                   setStart("");
                   setEnd("");
                 }
               }}
-            >
-              <option value="custom">Personalizado</option>
-              <option value="month">Este mês</option>
-              <option value="year">Este ano</option>
-              <option value="all">Todo o histórico</option>
-            </Select>
+              options={[
+                { value: "custom", label: "Personalizado" },
+                { value: "month", label: "Este mês" },
+                { value: "year", label: "Este ano" },
+                { value: "all", label: "Todo o histórico" },
+              ]}
+            />
           </Field>
         </div>
       </Card>

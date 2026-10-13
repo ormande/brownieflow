@@ -14,11 +14,11 @@ import {
   Badge,
   Button,
   Card,
+  CustomSelect,
   Empty,
   Field,
   Input,
   PageHeader,
-  Select,
   Stat,
 } from "../components/ui";
 import { OperationState, recipeMetrics } from "../components/operations/helpers";
@@ -115,19 +115,17 @@ export default function Planning() {
                     </h2>
                   </div>
                   <Field label="Receita">
-                    <Select
+                    <CustomSelect
                       value={recipe.id}
-                      onChange={(event) => {
-                        setRecipeId(event.target.value);
+                      onChange={(value) => {
+                        setRecipeId(value);
                         setAveragePrice(null);
                       }}
-                    >
-                      {data.recipes.map((row) => (
-                        <option key={row.id} value={row.id}>
-                          {row.name}
-                        </option>
-                      ))}
-                    </Select>
+                      options={data.recipes.map((row) => ({
+                        value: row.id,
+                        label: row.name,
+                      }))}
+                    />
                   </Field>
                   <div className="form-grid">
                     <Field
@@ -169,15 +167,14 @@ export default function Planning() {
                     </strong>
                   </div>
                   <Field label="Como estimar as vendas">
-                    <Select
+                    <CustomSelect
                       value={pricing}
-                      onChange={(event) =>
-                        setPricing(event.target.value as "mix" | "average")
-                      }
-                    >
-                      <option value="mix">Mix entre à vista e fiado</option>
-                      <option value="average">Preço médio por brownie</option>
-                    </Select>
+                      onChange={(value) => setPricing(value as "mix" | "average")}
+                      options={[
+                        { value: "mix", label: "Mix entre à vista e fiado" },
+                        { value: "average", label: "Preço médio por brownie" },
+                      ]}
+                    />
                   </Field>
                   {pricing === "mix" ? (
                     <>

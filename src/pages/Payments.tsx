@@ -7,11 +7,11 @@ import {
   Badge,
   Button,
   Card,
+  CustomSelect,
   Empty,
   Field,
   Modal,
   PageHeader,
-  Select,
   Stat,
   Textarea,
 } from "../components/ui";
@@ -136,22 +136,29 @@ export default function Payments() {
         <div className="toolbar">
           <DateRange start={start} end={end} setStart={setStart} setEnd={setEnd} />
           <Field label="Situação">
-            <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="active">Recebimentos ativos</option>
-              <option value="unlinked">Sem vínculo</option>
-              <option value="void">Estornados</option>
-              <option value="all">Todos</option>
-            </Select>
+            <CustomSelect
+              value={status}
+              onChange={setStatus}
+              options={[
+                { value: "active", label: "Recebimentos ativos" },
+                { value: "unlinked", label: "Sem vínculo" },
+                { value: "void", label: "Estornados" },
+                { value: "all", label: "Todos" },
+              ]}
+            />
           </Field>
           <Field label="Método">
-            <Select value={method} onChange={(e) => setMethod(e.target.value)}>
-              <option value="all">Todos</option>
-              {Object.entries(methodLabel).map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </Select>
+            <CustomSelect
+              value={method}
+              onChange={setMethod}
+              options={[
+                { value: "all", label: "Todos" },
+                ...Object.entries(methodLabel).map(([value, label]) => ({
+                  value,
+                  label,
+                })),
+              ]}
+            />
           </Field>
         </div>
       </Card>

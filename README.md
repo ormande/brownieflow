@@ -100,6 +100,8 @@ Nome de exibição, nome de usuário e senha podem ser alterados em Configuraç�
 
 ## Arquitetura
 
+Os pacotes Radix UI estão fixados em versões compatíveis e devem ser atualizados em conjunto. Cópias diferentes de `react-focus-scope` e `react-dismissable-layer` fazem os modais bloquear o foco e os cliques de calendários e seletores. Os testes de interface cobrem esses controles dentro do formulário de venda em computador e celular.
+
 ```text
 src/
   components/ui.tsx           Componentes acessíveis reutilizáveis

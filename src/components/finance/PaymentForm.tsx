@@ -2,7 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Badge, Button, Card, Field, Input, Modal, Select, Textarea } from "../ui";
+import {
+  Badge,
+  Button,
+  Card,
+  CustomerCombobox,
+  CustomSelect,
+  DatePicker,
+  Field,
+  Input,
+  Modal,
+  Textarea,
+} from "../ui";
 import { useAction, useAppData } from "../../lib/data";
 import { saleBalance } from "../../lib/finance";
 import { dateLabel, money, toCents, today } from "../../lib/format";
@@ -168,45 +179,48 @@ export default function PaymentForm({
     >
       <form onSubmit={submit} className="stack">
         <Field label="Cliente" error={errors.customer_id?.message}>
-          <Select
-            {...register("customer_id")}
-            onChange={(e) => {
-              setValue("customer_id", e.target.value);
-              setValue("allocation", e.target.value ? "fifo" : "unlinked");
+          <CustomerCombobox
+            value={values.customer_id}
+            customers={data?.customers ?? []}
+            placeholder="Selecionar cliente"
+            emptyLabel="Sem cliente, para conciliação"
+            showArchived
+            onChange={(value) => {
+              setValue("customer_id", value, { shouldDirty: true, shouldValidate: true });
+              setValue("allocation", value ? "fifo" : "unlinked", {
+                shouldDirty: true,
+              });
               setSelected([]);
             }}
-          >
-            <option value="">Sem cliente</option>
-            {data?.customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-                {c.archived ? " (arquivado)" : ""}
-              </option>
-            ))}
-          </Select>
+          />
         </Field>
         <Field label="Como vincular este recebimento">
-          <Select
-            {...register("allocation")}
-            onChange={(e) => {
-              setValue("allocation", e.target.value as Values["allocation"]);
+          <CustomSelect
+            value={values.allocation}
+            onChange={(value) => {
+              setValue("allocation", value as Values["allocation"], {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
               setSelectionError("");
-              if (e.target.value === "unlinked") {
+              if (value === "unlinked") {
                 setValue("customer_id", "");
                 setSelected([]);
               }
             }}
-          >
-            <option value={values.customer_id ? "fifo" : "unlinked"}>
-              {values.customer_id
-                ? "Quitar primeiro as vendas mais antigas"
-                : "Sem vínculo, para conciliação"}
-            </option>
-            <option value="selected">Escolher vendas específicas</option>
-            {values.customer_id && (
-              <option value="unlinked">Sem vínculo, para conciliação</option>
-            )}
-          </Select>
+            options={[
+              {
+                value: values.customer_id ? "fifo" : "unlinked",
+                label: values.customer_id
+                  ? "Quitar primeiro as vendas mais antigas"
+                  : "Sem vínculo, para conciliação",
+              },
+              { value: "selected", label: "Escolher vendas específicas" },
+              ...(values.customer_id
+                ? [{ value: "unlinked", label: "Sem vínculo, para conciliação" }]
+                : []),
+            ]}
+          />
         </Field>
         {values.allocation === "selected" && (
           <Card style={{ padding: 16 }}>
@@ -271,17 +285,28 @@ export default function PaymentForm({
             <Input inputMode="decimal" placeholder="0,00" {...register("amount")} />
           </Field>
           <Field label="Data do pagamento" error={errors.payment_date?.message}>
-            <Input type="date" {...register("payment_date")} />
+            <DatePicker
+              value={values.payment_date}
+              onChange={(value) =>
+                setValue("payment_date", value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            />
           </Field>
         </div>
         <Field label="Forma de pagamento">
-          <Select {...register("method")}>
-            {paymentMethods.map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </Select>
+          <CustomSelect
+            value={values.method}
+            onChange={(value) =>
+              setValue("method", value as Values["method"], {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
+            options={paymentMethods.map(([value, label]) => ({ value, label }))}
+          />
         </Field>
         <Field label="Observações">
           <Textarea

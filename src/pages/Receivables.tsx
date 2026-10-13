@@ -7,12 +7,13 @@ import { ArrowUpRight, MessageCircle, Pencil, Wallet } from "lucide-react";
 import {
   Button,
   Card,
+  CustomSelect,
+  DatePicker,
   Empty,
   Field,
   Input,
   Modal,
   PageHeader,
-  Select,
   Stat,
   Textarea,
 } from "../components/ui";
@@ -62,6 +63,7 @@ export default function Receivables() {
     handleSubmit,
     watch,
     reset,
+    setValue,
     setError,
     formState: { errors },
   } = useForm<AdjustmentValues>({
@@ -182,25 +184,29 @@ export default function Receivables() {
       <Card>
         <div className="toolbar">
           <Field label="Situação">
-            <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
-              <option value="open">Em aberto</option>
-              <option value="all">Todos</option>
-              <option value="today">Vencendo hoje</option>
-              <option value="overdue">Atrasados</option>
-              <option value="partial">Parcialmente pagos</option>
-              <option value="paid">Quitados</option>
-            </Select>
+            <CustomSelect
+              value={filter}
+              onChange={setFilter}
+              options={[
+                { value: "open", label: "Em aberto" },
+                { value: "all", label: "Todos" },
+                { value: "today", label: "Vencendo hoje" },
+                { value: "overdue", label: "Atrasados" },
+                { value: "partial", label: "Parcialmente pagos" },
+                { value: "paid", label: "Quitados" },
+              ]}
+            />
           </Field>
           <Field label="Cliente">
-            <Select value={customer} onChange={(e) => setCustomer(e.target.value)}>
-              <option value="all">Todos os clientes</option>
-              <option value="none">Sem cliente</option>
-              {data.customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
+            <CustomSelect
+              value={customer}
+              onChange={setCustomer}
+              options={[
+                { value: "all", label: "Todos os clientes" },
+                { value: "none", label: "Sem cliente" },
+                ...data.customers.map((row) => ({ value: row.id, label: row.name })),
+              ]}
+            />
           </Field>
         </div>
       </Card>
@@ -356,17 +362,34 @@ export default function Receivables() {
             <strong>{money(adjusting ? saleBalance(adjusting, data) : 0)}</strong>
           </div>
           <Field label="Tipo de ajuste">
-            <Select {...register("direction")}>
-              <option value="discount">Conceder desconto</option>
-              <option value="increase">Acrescentar valor ao saldo</option>
-            </Select>
+            <CustomSelect
+              value={adjustmentValues.direction}
+              onChange={(value) =>
+                setValue("direction", value as AdjustmentValues["direction"], {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+              options={[
+                { value: "discount", label: "Conceder desconto" },
+                { value: "increase", label: "Acrescentar valor ao saldo" },
+              ]}
+            />
           </Field>
           <div className="form-grid">
             <Field label="Valor do ajuste (R$)" error={errors.amount?.message}>
               <Input inputMode="decimal" {...register("amount")} />
             </Field>
             <Field label="Data" error={errors.adjustment_date?.message}>
-              <Input type="date" {...register("adjustment_date")} />
+              <DatePicker
+                value={adjustmentValues.adjustment_date}
+                onChange={(value) =>
+                  setValue("adjustment_date", value, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
             </Field>
           </div>
           <Field label="Justificativa" error={errors.reason?.message}>

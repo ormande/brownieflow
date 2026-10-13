@@ -18,10 +18,10 @@ import {
   Button,
   Card,
   ConfirmButton,
+  CustomSelect,
   Empty,
   Input,
   PageHeader,
-  Select,
   Stat,
 } from "../components/ui";
 import {
@@ -407,45 +407,40 @@ export default function Inventory() {
               {tab === "history" && (
                 <>
                   <div className="toolbar">
-                    <Select
+                    <CustomSelect
                       aria-label="Filtrar item"
                       value={historyTarget}
-                      onChange={(event) => {
-                        setHistoryTarget(event.target.value);
+                      onChange={(value) => {
+                        setHistoryTarget(value);
                         setHistoryLimit(50);
                       }}
-                    >
-                      <option value="">Todos os itens</option>
-                      <optgroup label="Brownies">
-                        {data.products.map((row) => (
-                          <option key={row.id} value={`product:${row.id}`}>
-                            {row.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Ingredientes">
-                        {data.ingredients.map((row) => (
-                          <option key={row.id} value={`ingredient:${row.id}`}>
-                            {row.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    </Select>
-                    <Select
+                      options={[
+                        { value: "", label: "Todos os itens" },
+                        ...data.products.map((row) => ({
+                          value: `product:${row.id}`,
+                          label: `Brownie · ${row.name}`,
+                        })),
+                        ...data.ingredients.map((row) => ({
+                          value: `ingredient:${row.id}`,
+                          label: `Ingrediente · ${row.name}`,
+                        })),
+                      ]}
+                    />
+                    <CustomSelect
                       aria-label="Filtrar tipo de movimento"
                       value={kind}
-                      onChange={(event) => {
-                        setKind(event.target.value);
+                      onChange={(value) => {
+                        setKind(value);
                         setHistoryLimit(50);
                       }}
-                    >
-                      <option value="">Todos os movimentos</option>
-                      {Object.entries(movementLabels).map(([key, label]) => (
-                        <option key={key} value={key}>
-                          {label}
-                        </option>
-                      ))}
-                    </Select>
+                      options={[
+                        { value: "", label: "Todos os movimentos" },
+                        ...Object.entries(movementLabels).map(([value, label]) => ({
+                          value,
+                          label,
+                        })),
+                      ]}
+                    />
                   </div>
                   {history.length ? (
                     <>

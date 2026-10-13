@@ -1,12 +1,15 @@
-import { Badge, Field, Input } from "../ui";
+import { Badge, DatePicker, Field } from "../ui";
 import type { AppData, Sale } from "../../types";
 import { saleStatus } from "../../lib/finance";
 import { today } from "../../lib/format";
 import { z } from "zod";
 
 export function validMoney(value: string, allowZero = false) {
-  if (!/^\d+([.,]\d{1,2})?$/.test(value)) return false;
-  const [whole, fraction = ""] = value.replace(",", ".").split(".");
+  const raw = value.replace(/R\$|\s|\u00a0/g, "");
+  if (!raw) return allowZero;
+  const normalized = raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw;
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return false;
+  const [whole, fraction = ""] = normalized.split(".");
   const cents = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, "0"));
   return cents >= (allowZero ? 0n : 1n) && cents <= BigInt(Number.MAX_SAFE_INTEGER);
 }
@@ -124,24 +127,13 @@ export function DateRange({
   return (
     <>
       <Field label="De">
-        <Input
-          type="date"
-          value={start}
-          max={end || undefined}
-          onChange={(e) => setStart(e.target.value)}
-        />
+        <DatePicker value={start} max={end || undefined} onChange={setStart} />
       </Field>
       <Field
         label="Até"
         error={invalid ? "A data final deve ser igual ou posterior à inicial" : undefined}
       >
-        <Input
-          type="date"
-          value={end}
-          min={start || undefined}
-          aria-invalid={invalid}
-          onChange={(e) => setEnd(e.target.value)}
-        />
+        <DatePicker value={end} min={start || undefined} onChange={setEnd} />
       </Field>
     </>
   );
