@@ -1,0 +1,275 @@
+.ops-state {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 32px;
+}
+.ops-state h2,
+.ops-state p {
+  margin: 0;
+}
+.ops-spin {
+  animation: ops-spin 1s linear infinite;
+}
+@keyframes ops-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.ops-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.ops-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.ops-header h2,
+.ops-header h3,
+.ops-header p {
+  margin: 0;
+}
+.ops-header p {
+  margin-top: 6px;
+}
+.ops-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ops-note {
+  border-radius: 16px;
+  padding: 16px 18px;
+  background: color-mix(in srgb, #d9914b 10%, transparent);
+  border: 1px solid color-mix(in srgb, #d9914b 25%, transparent);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  line-height: 1.6;
+}
+.ops-note > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.ops-note p {
+  margin: 0;
+}
+.ops-note.ops-good {
+  background: color-mix(in srgb, #339d79 9%, transparent);
+  border-color: color-mix(in srgb, #339d79 25%, transparent);
+}
+.ops-note.ops-danger {
+  background: color-mix(in srgb, #d85656 8%, transparent);
+  border-color: color-mix(in srgb, #d85656 25%, transparent);
+}
+.ops-error {
+  font-size: 13px;
+  color: #dc6262;
+  margin: 6px 0;
+}
+.ops-form-list {
+  display: grid;
+  gap: 12px;
+}
+.ops-form-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.6fr) minmax(85px, 1fr) minmax(85px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 16px;
+}
+.ops-form-row.ops-recipe-row {
+  grid-template-columns: minmax(130px, 2fr) minmax(85px, 1fr) auto;
+}
+.ops-form-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: color-mix(in srgb, #b16e44 8%, transparent);
+}
+.ops-form-summary strong {
+  font-size: 20px;
+}
+.ops-number {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ops-subtitle {
+  font-size: 12px;
+  display: block;
+  margin-top: 4px;
+  opacity: 0.62;
+}
+.ops-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.ops-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #39a27b;
+  flex-shrink: 0;
+}
+.ops-dot.low {
+  background: #e2a14a;
+}
+.ops-fine {
+  font-size: 12px;
+  line-height: 1.6;
+  opacity: 0.68;
+}
+.ops-recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+  gap: 20px;
+}
+.ops-recipe-cost {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 18px 0;
+}
+.ops-recipe-cost strong {
+  font-size: 34px;
+  letter-spacing: -0.04em;
+}
+.ops-recipe-line {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+  font-size: 14px;
+}
+.ops-recipe-line:last-child {
+  border-bottom: 0;
+}
+.ops-recipe-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding-top: 18px;
+  margin-top: 10px;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+.ops-recipe-footer strong {
+  display: block;
+  margin-top: 5px;
+}
+.ops-planning {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.6fr);
+  gap: 22px;
+  align-items: start;
+}
+.ops-hero {
+  padding: 24px;
+  border-radius: 20px;
+  background: linear-gradient(130deg, #503829, #77513a);
+  color: #fff7ef;
+}
+.ops-hero p {
+  margin: 0;
+  opacity: 0.78;
+}
+.ops-hero strong {
+  font-size: clamp(32px, 5vw, 44px);
+  display: block;
+  margin: 10px 0;
+  letter-spacing: -0.045em;
+}
+.ops-progress {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  margin-top: 9px;
+}
+.ops-progress span {
+  display: block;
+  height: 100%;
+  border-radius: 20px;
+  background: #49a481;
+}
+.ops-capacity {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+.ops-capacity-item {
+  border: 1px solid color-mix(in srgb, currentColor 11%, transparent);
+  border-radius: 16px;
+  padding: 16px;
+}
+.ops-capacity-item strong {
+  font-size: 26px;
+  display: block;
+  margin: 6px 0;
+}
+.ops-filter {
+  max-width: 340px;
+  min-width: 170px;
+}
+.ops-hint {
+  margin: 0;
+}
+.ops-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.ops-full {
+  grid-column: 1 / -1;
+}
+.ops-positive {
+  color: #279373;
+}
+.ops-negative {
+  color: #cf654f;
+}
+@media (max-width: 760px) {
+  .ops-planning {
+    grid-template-columns: 1fr;
+  }
+  .ops-form-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+  .ops-form-row > :first-child {
+    grid-column: 1 / -1;
+  }
+  .ops-form-row.ops-recipe-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .ops-header {
+    flex-direction: column;
+  }
+  .ops-actions {
+    width: 100%;
+  }
+  .ops-actions > button {
+    flex-grow: 1;
+  }
+  .ops-filter {
+    max-width: none;
+    width: 100%;
+  }
+  .ops-recipe-line {
+    gap: 10px;
+  }
+}
